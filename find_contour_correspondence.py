@@ -33,7 +33,6 @@ def build_correspondence(source_points, target_points):
     :return: source_points corresponding_points
     """
     tangent_lines = np.diff(source_points, axis=0)
-    print(tangent_lines.shape)
     source_tmp = source_points + target_points[0, :]-source_points[0, :]
     corresponding_points = list()
     corresponding_points.append(target_points[0, :])
@@ -41,7 +40,7 @@ def build_correspondence(source_points, target_points):
         vec = target_points - source_tmp[i, :]
         dis = np.abs(np.dot(vec, tangent_lines[i-1, :]))/np.linalg.norm(tangent_lines[i-1, :])
         corresponding_points.append(target_points[np.argmin(dis), :])
-    return source_points, np.array(corresponding_points, dtype=np.int32)
+    return source_points, np.array(corresponding_points, dtype=np.int32), source_tmp
 
 
 def play_contour():
@@ -75,7 +74,7 @@ if __name__ == "__main__":
         mesh_contour = load_pickle(os.path.join(r"\\192.168.20.63\ai\Liyou_wang_data"
                                                 r"\double_cameras_video\imgs\xy1\mesh_contour_4200_4800",
                                                 "right", "{}.pkl".format(i+start_jpg)))
-        mesh_contour = mesh_contour[np.arange(0, mesh_contour.shape[0], 2), :]
+        # mesh_contour = mesh_contour[np.arange(0, mesh_contour.shape[0], 2), :]
 
         left_contour = markers_contour  # [np.where(markers_contour[:, 0] < 500)[0], :]
         # right_contour = markers_contour[np.where(markers_contour[:, 0] > 500)[0], :]
@@ -88,11 +87,11 @@ if __name__ == "__main__":
                                                                            left_contour[-1, 0], num=fit_number))  # y
         left_contour_fit = np.rint(left_contour_fit).astype(np.int32)  # 四舍五入取整
         arc_len = cv2.arcLength(left_contour, closed=False)
-        source, correspondence = build_correspondence(mesh_contour, markers_contour)
-        cv2.polylines(img, [markers_contour], isClosed=False, color=(0, 255, 0), thickness=1, lineType=8, shift=0)
+        source, correspondence, source_tmp = build_correspondence(mesh_contour, left_contour_fit)
+        cv2.polylines(img, [left_contour_fit], isClosed=False, color=(0, 255, 0), thickness=1, lineType=8, shift=0)
         cv2.polylines(img, [mesh_contour], isClosed=False, color=(0, 0, 255), thickness=1, lineType=8, shift=0)
-        for i in range(0, source.shape[0]):
-            cv2.line(img, (source[i, 0], source[i, 1]), (correspondence[i, 0], correspondence[i, 1]),
+        for j in range(0, source.shape[0]):
+            cv2.line(img, (source[j, 0], source[j, 1]), (correspondence[j, 0], correspondence[j, 1]),
                      color=(255, 0, 0), thickness=1)
         # cv2.polylines(img, [left_contour_fit], isClosed=False,
         #               color=(0, 0, 255), thickness=1, lineType=8, shift=0)
